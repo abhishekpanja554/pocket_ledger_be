@@ -26,8 +26,19 @@ public class User {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
-    public  User(String email, String passwordHash) {
+    @Column(name = "email_verified",nullable = false)
+    private boolean emailVerified;
+
+    public User(String email, String passwordHash) {
         this.email = email;
+        this.passwordHash = passwordHash;
+    }
+
+    public void verifyEmail(){
+        this.emailVerified = true;
+    }
+
+    public void changePassword(String passwordHash){
         this.passwordHash = passwordHash;
     }
 }
