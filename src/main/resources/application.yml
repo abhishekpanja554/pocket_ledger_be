@@ -1,6 +1,7 @@
 app:
   cors:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
 spring:
   application:
     name: pocket_ledget_be

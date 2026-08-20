@@ -1,4 +1,4 @@
-package com.abhout.pocket_ledger_be.auth;
+package com.abhout.pocket_ledger_be.auth.models;
 
 import com.abhout.pocket_ledger_be.user.User;
 import jakarta.persistence.*;
@@ -32,8 +32,8 @@ public class AuthToken {
     @Column(name = "created_at")
     private Instant createdAt = Instant.now();
 
-    AuthToken(User user, String tokenHash,
-              TokenPurpose purpose, Instant expiresAt) {
+    public AuthToken(User user, String tokenHash,
+                     TokenPurpose purpose, Instant expiresAt) {
         this.user = user;
         this.tokenHash = tokenHash;
         this.purpose = purpose;

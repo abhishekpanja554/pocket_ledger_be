@@ -1,8 +1,12 @@
-package com.abhout.pocket_ledger_be.auth;
+package com.abhout.pocket_ledger_be.auth.services;
 
+import com.abhout.pocket_ledger_be.auth.models.AuthToken;
+import com.abhout.pocket_ledger_be.auth.repositories.AuthTokenRepository;
+import com.abhout.pocket_ledger_be.auth.exceptions.InvalidTokenException;
+import com.abhout.pocket_ledger_be.auth.models.TokenPurpose;
 import com.abhout.pocket_ledger_be.user.User;
-import com.abhout.pocket_ledger_be.user.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -10,17 +14,15 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.Optional;
 
 @Service
+@Transactional
 public class TokenService {
     private final AuthTokenRepository authTokenRepository;
-    private final UserRepository userRepository;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    TokenService(AuthTokenRepository authTokenRepository, UserRepository userRepository) {
+    TokenService(AuthTokenRepository authTokenRepository) {
         this.authTokenRepository = authTokenRepository;
-        this.userRepository = userRepository;
     }
 
     private String hash(String rawToken) {
@@ -34,19 +36,20 @@ public class TokenService {
     }
 
     public String issue(User user, TokenPurpose tokenPurpose, Duration validFor) {
-        authTokenRepository.invalidateActive(user, tokenPurpose);
+        authTokenRepository.findAllByUserAndPurposeAndUsedAtIsNull(user, tokenPurpose)
+            .forEach(AuthToken::markUsed);
         byte[] randomBytes = new byte[32];
         secureRandom.nextBytes(randomBytes);
         String rawToken = Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(randomBytes);
+            .withoutPadding()
+            .encodeToString(randomBytes);
         String tokenHash = hash(rawToken);
 
         AuthToken authToken = new AuthToken(
-                user,
-                tokenHash,
-                tokenPurpose,
-                Instant.now().plus(validFor)
+            user,
+            tokenHash,
+            tokenPurpose,
+            Instant.now().plus(validFor)
         );
         authTokenRepository.save(authToken);
         return rawToken;
