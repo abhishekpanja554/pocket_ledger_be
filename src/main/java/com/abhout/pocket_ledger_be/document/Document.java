@@ -17,27 +17,22 @@ public class Document {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    UUID id;
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
-    User user;
-
-    String filename;
-
-    String mimeType;
-
-    long size;
-
-    String objectKey;
+    private User user;
+    private String filename;
+    private String mimeType;
+    private long size;
+    private String objectKey;
 
     @Column(columnDefinition = "text")
-    DocumentStatus status;
+    private DocumentStatus status;
 
     @Column(columnDefinition = "text")
-    DocumentSource source;
-
-    Instant createdAt = Instant.now();
+    private DocumentSource source;
+    private Instant createdAt = Instant.now();
 
     Document(
             User user,

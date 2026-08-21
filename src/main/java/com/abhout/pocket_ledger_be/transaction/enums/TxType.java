@@ -1,14 +1,14 @@
-package com.abhout.pocket_ledger_be.document;
+package com.abhout.pocket_ledger_be.transaction.enums;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum DocumentSource {
-    UPLOAD("upload"),
-    GOOGLE_DRIVE("google-drive");
+public enum TxType {
+    EXPENSE("expense"),
+    INCOME("income");
 
     private final String wireValue;
 
-    DocumentSource(String wireValue) {
+    TxType(String wireValue) {
         this.wireValue = wireValue;
     }
 

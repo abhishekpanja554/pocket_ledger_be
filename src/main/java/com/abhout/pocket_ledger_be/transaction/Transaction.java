@@ -1,5 +1,7 @@
 package com.abhout.pocket_ledger_be.transaction;
 
+import com.abhout.pocket_ledger_be.transaction.enums.TxSource;
+import com.abhout.pocket_ledger_be.transaction.enums.TxType;
 import com.abhout.pocket_ledger_be.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

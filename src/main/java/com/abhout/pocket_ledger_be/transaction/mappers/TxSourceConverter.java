@@ -1,5 +1,6 @@
-package com.abhout.pocket_ledger_be.transaction;
+package com.abhout.pocket_ledger_be.transaction.mappers;
 
+import com.abhout.pocket_ledger_be.transaction.enums.TxSource;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

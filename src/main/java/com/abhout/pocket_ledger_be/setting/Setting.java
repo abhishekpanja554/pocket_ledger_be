@@ -18,10 +18,12 @@ public class Setting {
     @Id
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id")
-    User user;
-    @Id String key;
-    @JdbcTypeCode(SqlTypes.JSON) String value;
-    Instant updatedAt = Instant.now();
+    private User user;
+    @Id
+    private String key;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private String value;
+    private Instant updatedAt = Instant.now();
 
     Setting(User user, String key, String value) {
         this.user = user;
