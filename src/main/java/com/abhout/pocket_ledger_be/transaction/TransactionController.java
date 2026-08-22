@@ -1,18 +1,18 @@
 package com.abhout.pocket_ledger_be.transaction;
 
+import com.abhout.pocket_ledger_be.transaction.DTOs.TransactionResponse;
+import com.abhout.pocket_ledger_be.transaction.DTOs.TransactionWriteResponse;
 import com.abhout.pocket_ledger_be.user.UserPrincipal;
 import com.abhout.pocket_ledger_be.web.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -87,6 +87,31 @@ public class TransactionController {
         return ResponseEntity.status(allFailedValidation ?
                     HttpStatus.BAD_REQUEST : HttpStatus.OK)
                     .body(ApiResponse.success(response));
+    }
+
+    @PatchMapping("/{id}")
+    public  ResponseEntity<ApiResponse<TransactionResponse>> updateTransaction(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable UUID id,
+            @RequestBody JsonNode body){
+        if (userPrincipal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("UNAUTHORIZED", "You are unauthorized"));
+        }
+        TransactionResponse response = transactionService.updateTransaction(userPrincipal.getUser(), id, body);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteTransaction(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @PathVariable UUID id){
+        if (userPrincipal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("UNAUTHORIZED", "You are unauthorized"));
+        }
+        transactionService.deleteTransaction(userPrincipal.getUser(), id);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 
 }

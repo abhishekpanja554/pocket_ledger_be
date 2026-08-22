@@ -1,11 +1,21 @@
 package com.abhout.pocket_ledger_be.transaction;
 
+import com.abhout.pocket_ledger_be.transaction.DTOs.TransactionResponse;
+import com.abhout.pocket_ledger_be.transaction.DTOs.TransactionWriteResponse;
+import com.abhout.pocket_ledger_be.transaction.exceptions.TransactionConflictException;
+import com.abhout.pocket_ledger_be.transaction.exceptions.TransactionNotFoundException;
+import com.abhout.pocket_ledger_be.transaction.exceptions.TransactionValidationException;
+import com.abhout.pocket_ledger_be.transaction.models.Transaction;
+import com.abhout.pocket_ledger_be.transaction.models.TransactionValidator;
+import com.abhout.pocket_ledger_be.transaction.models.ValidTransaction;
 import com.abhout.pocket_ledger_be.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -26,6 +36,25 @@ public class TransactionService {
         return objectMapper.writeValueAsString(tags);
     }
 
+    private void copy(ObjectNode merged, JsonNode body, String field, JsonNode fallback){
+        merged.set(field, body.has(field) ? body.get(field) : fallback);
+    }
+
+    private JsonNode mergeForUpdate(JsonNode body, Transaction currentTransaction){
+        ObjectNode merged = objectMapper.createObjectNode();
+        copy(merged, body, "date", objectMapper.valueToTree(currentTransaction.getDate().toString()));
+        copy(merged, body, "merchant", objectMapper.valueToTree(currentTransaction.getMerchant()));
+        copy(merged, body, "category", objectMapper.valueToTree(currentTransaction.getCategory()));
+        copy(merged, body, "amount", objectMapper.valueToTree(currentTransaction.getAmount().toString()));
+        copy(merged, body, "type", objectMapper.valueToTree(currentTransaction.getType().getWireValue()));
+        copy(merged, body, "account", objectMapper.valueToTree(currentTransaction.getAccount()));
+        copy(merged, body, "tags", objectMapper.valueToTree(currentTransaction.getTags()));
+        copy(merged, body, "receipt", objectMapper.valueToTree(currentTransaction.isReceipt()));
+        merged.put("source", currentTransaction.getSource().getWireValue());
+        return merged;
+    }
+
+    @Transactional
     public TransactionWriteResponse insertTransactions(
         User user,
         List<JsonNode> rawInputs,
@@ -154,5 +183,28 @@ public class TransactionService {
             }
         }
         return new TransactionWriteResponse(inserted,duplicates,skipped,needsReview,errorMessages,rows);
+    }
+
+    @Transactional
+    public  TransactionResponse updateTransaction(User user, UUID id, JsonNode body){
+        Transaction current = transactionRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(TransactionNotFoundException::new);
+        ValidTransaction valid = transactionValidator.validate(mergeForUpdate(body, current));
+
+        String fingerprint = valid.fingerprint();
+
+        if(!fingerprint.equals(current.getFingerprint())
+                && transactionRepository.existsByUserIdAndFingerprintAndIdNot(user.getId(), fingerprint, id)){
+            throw new TransactionConflictException();
+        }
+        current.applyEdit(valid, fingerprint);
+        return TransactionResponse.from(current);
+    }
+
+    @Transactional
+    public void deleteTransaction(User user, UUID id){
+        Transaction currentTransaction = transactionRepository.findByIdAndUserId(id, user.getId())
+                .orElseThrow(TransactionNotFoundException::new);
+        transactionRepository.delete(currentTransaction);
     }
 }

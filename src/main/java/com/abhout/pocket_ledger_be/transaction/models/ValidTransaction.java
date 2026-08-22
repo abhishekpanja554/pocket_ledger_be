@@ -1,4 +1,4 @@
-package com.abhout.pocket_ledger_be.transaction;
+package com.abhout.pocket_ledger_be.transaction.models;
 
 import com.abhout.pocket_ledger_be.transaction.enums.TxSource;
 import com.abhout.pocket_ledger_be.transaction.enums.TxType;

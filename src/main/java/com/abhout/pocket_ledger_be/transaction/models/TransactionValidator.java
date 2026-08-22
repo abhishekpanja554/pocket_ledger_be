@@ -1,7 +1,8 @@
-package com.abhout.pocket_ledger_be.transaction;
+package com.abhout.pocket_ledger_be.transaction.models;
 
 import com.abhout.pocket_ledger_be.transaction.enums.TxSource;
 import com.abhout.pocket_ledger_be.transaction.enums.TxType;
+import com.abhout.pocket_ledger_be.transaction.exceptions.TransactionValidationException;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 
@@ -23,7 +24,7 @@ public class TransactionValidator {
             Pattern.compile("^(\\d{1,2})[/.\\-](\\d{1,2})[/.\\-](\\d{4})$");
     private static final int MAX_TAGS = 25;
     public static final String DEFAULT_CATEGORY = "Needs review";
-    public ValidTransaction validate(JsonNode raw) throws TransactionValidationException{
+    public ValidTransaction validate(JsonNode raw) throws TransactionValidationException {
         LocalDate date = validateDate(raw);
         String merchant = validateMerchant(raw);
         BigDecimal amount = validateAmount(raw);

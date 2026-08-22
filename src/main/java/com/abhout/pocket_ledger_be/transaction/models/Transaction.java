@@ -1,4 +1,4 @@
-package com.abhout.pocket_ledger_be.transaction;
+package com.abhout.pocket_ledger_be.transaction.models;
 
 import com.abhout.pocket_ledger_be.transaction.enums.TxSource;
 import com.abhout.pocket_ledger_be.transaction.enums.TxType;
@@ -63,6 +63,18 @@ public class Transaction {
         this.tags = tags;
         this.receipt = receipt;
         this.source = source;
+        this.fingerprint = fingerprint;
+    }
+
+    public void applyEdit(ValidTransaction v, String fingerprint) {
+        this.date = v.date();
+        this.merchant = v.merchant();
+        this.category = v.category();
+        this.amount = v.amount();
+        this.type = v.type();
+        this.account = v.account();
+        this.tags = v.tags();
+        this.receipt = v.receipt();
         this.fingerprint = fingerprint;
     }
 }

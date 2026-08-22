@@ -4,7 +4,7 @@ import com.abhout.pocket_ledger_be.document.DocumentResponse;
 import com.abhout.pocket_ledger_be.rule.RuleResponse;
 import com.abhout.pocket_ledger_be.setting.SettingsResponse;
 import com.abhout.pocket_ledger_be.tag.TagResponse;
-import com.abhout.pocket_ledger_be.transaction.TransactionResponse;
+import com.abhout.pocket_ledger_be.transaction.DTOs.TransactionResponse;
 
 import java.util.List;
 
