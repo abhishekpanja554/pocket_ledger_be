@@ -54,6 +54,18 @@ public class TransactionService {
         return merged;
     }
 
+    private Set<String> normalizeStripTargets(JsonNode node) {
+        if (node == null || !node.isArray()) return Set.of();
+        Set<String> result = new HashSet<>();
+        for (JsonNode item : node) {
+            if (!item.isString()) continue;
+            String trimmed = item.asString("").trim();
+            if (trimmed.isEmpty()) continue;
+            result.add(trimmed.toLowerCase());
+        }
+        return result;
+    }
+
     @Transactional
     public TransactionWriteResponse insertTransactions(
         User user,
@@ -206,5 +218,16 @@ public class TransactionService {
         Transaction currentTransaction = transactionRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(TransactionNotFoundException::new);
         transactionRepository.delete(currentTransaction);
+    }
+
+    @Transactional
+    public void stripTags(User user, JsonNode namesNode) {
+        Set<String> targets = normalizeStripTargets(namesNode);
+        if (targets.isEmpty()) return;
+        for (Transaction tx : transactionRepository.findByUserId(user.getId()))
+        {
+            if (tx.getTags().isEmpty()) continue;
+            tx.stripTags(targets);
+        }
     }
 }

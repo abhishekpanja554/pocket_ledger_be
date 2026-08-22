@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -76,5 +77,11 @@ public class Transaction {
         this.tags = v.tags();
         this.receipt = v.receipt();
         this.fingerprint = fingerprint;
+    }
+
+    public void stripTags(Set<String> lowerTargets) {
+        this.tags = this.tags.stream()
+            .filter(t -> !lowerTargets.contains(t.trim().toLowerCase()))
+            .toList();
     }
 }
