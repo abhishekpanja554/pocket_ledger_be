@@ -3,9 +3,18 @@ app:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   default-timezone: ${LEDGERLY_TIMEZONE:Asia/Kolkata}
+  storage:
+    s3:
+      bucket: ${S3_BUCKET:pocket-ledger-s3-567627324227-ap-south-1-an}
+      region: ${AWS_REGION:ap-south-1}
 spring:
   application:
     name: pocket_ledget_be
+
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 250MB
 
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/pocket_ledger}

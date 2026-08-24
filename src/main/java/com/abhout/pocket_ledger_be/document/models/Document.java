@@ -1,5 +1,7 @@
-package com.abhout.pocket_ledger_be.document;
+package com.abhout.pocket_ledger_be.document.models;
 
+import com.abhout.pocket_ledger_be.document.enums.DocumentSource;
+import com.abhout.pocket_ledger_be.document.enums.DocumentStatus;
 import com.abhout.pocket_ledger_be.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -34,7 +36,7 @@ public class Document {
     private DocumentSource source;
     private Instant createdAt = Instant.now();
 
-    Document(
+    public Document(
             User user,
             String filename,
             String mimeType,

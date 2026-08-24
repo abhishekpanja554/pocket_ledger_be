@@ -1,5 +1,6 @@
-package com.abhout.pocket_ledger_be.document;
+package com.abhout.pocket_ledger_be.document.mappers;
 
+import com.abhout.pocket_ledger_be.document.enums.DocumentSource;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 

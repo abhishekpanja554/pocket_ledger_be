@@ -1,4 +1,4 @@
-package com.abhout.pocket_ledger_be.document;
+package com.abhout.pocket_ledger_be.document.enums;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 

@@ -1,4 +1,8 @@
-package com.abhout.pocket_ledger_be.document;
+package com.abhout.pocket_ledger_be.document.DTOs;
+
+import com.abhout.pocket_ledger_be.document.models.Document;
+import com.abhout.pocket_ledger_be.document.enums.DocumentSource;
+import com.abhout.pocket_ledger_be.document.enums.DocumentStatus;
 
 import java.time.Instant;
 import java.util.UUID;

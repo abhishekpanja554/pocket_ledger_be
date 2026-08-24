@@ -1,7 +1,7 @@
 package com.abhout.pocket_ledger_be.state;
 
 import com.abhout.pocket_ledger_be.document.DocumentRepository;
-import com.abhout.pocket_ledger_be.document.DocumentResponse;
+import com.abhout.pocket_ledger_be.document.DTOs.DocumentResponse;
 import com.abhout.pocket_ledger_be.rule.RuleRepository;
 import com.abhout.pocket_ledger_be.rule.RuleResponse;
 import com.abhout.pocket_ledger_be.setting.SettingService;
