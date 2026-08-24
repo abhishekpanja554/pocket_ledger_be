@@ -31,6 +31,19 @@ public class TagService {
         return result;
     }
 
+    private List<String> normalizeTagNames(List<String> names) {
+        List<String> result = new ArrayList<>();
+        Set<String> seenLower = new LinkedHashSet<>();
+        for (String name : names) {
+            if (name == null) continue;
+            String trimmed = name.trim();
+            if (trimmed.isEmpty()) continue;
+            if (!seenLower.add(trimmed.toLowerCase())) continue;
+            result.add(trimmed);
+        }
+        return result;
+    }
+
     @Transactional
     public void replaceTags(User user, JsonNode tagsNode) {
         List<String> names = normalizeNames(tagsNode);
@@ -53,5 +66,21 @@ public class TagService {
                 .map(name -> new Tag(user, name))
                 .toList();
         tagRepository.saveAll(toInsert);
+    }
+
+    @Transactional
+    public void registerTags(User user, List<String> tagNames) {
+        List<String> unique = normalizeTagNames(tagNames);
+        if (unique.isEmpty()) return;
+
+        Set<String> existingLower = tagRepository.findByUserIdOrderByNameAsc(user.getId())
+            .stream().map(t -> t.getName().toLowerCase()).collect(Collectors.toSet());
+
+        List<Tag> toInsert = unique.stream()
+                .filter(name -> !existingLower.contains(name.toLowerCase()))
+                .map(name -> new Tag(user, name))
+                .toList();
+
+        if (!toInsert.isEmpty()) tagRepository.saveAll(toInsert);
     }
 }

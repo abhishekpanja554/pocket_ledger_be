@@ -1,5 +1,8 @@
 package com.abhout.pocket_ledger_be.transaction;
 
+import com.abhout.pocket_ledger_be.rule.Rule;
+import com.abhout.pocket_ledger_be.rule.RuleService;
+import com.abhout.pocket_ledger_be.tag.TagService;
 import com.abhout.pocket_ledger_be.transaction.DTOs.TransactionResponse;
 import com.abhout.pocket_ledger_be.transaction.DTOs.TransactionWriteResponse;
 import com.abhout.pocket_ledger_be.transaction.exceptions.TransactionConflictException;
@@ -28,6 +31,8 @@ public class TransactionService {
     private static final int MAX_ERROR_MESSAGES = 20;
     private final TransactionRepository transactionRepository;
     private final TransactionValidator transactionValidator;
+    private final RuleService ruleService;
+    private final TagService tagService;
     private final JdbcTemplate jDBCTemplate;
     private record Candidate(ValidTransaction value,
                              String fingerprint) {}
@@ -98,14 +103,17 @@ public class TransactionService {
             }
             candidates.add(new Candidate(transaction, fingerP));
         }
-
+        List<Rule> enabledRules = applyRules ? ruleService.findEnabledRules(user.getId()) : List.of();
         Set<String> existingFingerprints = transactionRepository.findByUserIdAndFingerprintIn(
                 user.getId(),seenFingerprints).stream().map(Transaction::getFingerprint)
                 .collect(Collectors.toSet());
         List<Candidate> toInsert = new ArrayList<>();
         for (Candidate candidate : candidates) {
             if(!existingFingerprints.contains(candidate.fingerprint())){
-                toInsert.add(candidate);
+                ValidTransaction finalValue = enabledRules.isEmpty() ?
+                        candidate.value()
+                        : ruleService.applyRules(candidate.value(), enabledRules);
+                toInsert.add(new Candidate(finalValue, candidate.fingerprint()));
             } else {
                 duplicates++;
             }
@@ -194,6 +202,8 @@ public class TransactionService {
                 duplicates++;
             }
         }
+        List<String> allTags = rows.stream().flatMap(r -> r.tags().stream()).toList();
+        tagService.registerTags(user, allTags);
         return new TransactionWriteResponse(inserted,duplicates,skipped,needsReview,errorMessages,rows);
     }
 
