@@ -3,13 +3,15 @@ package com.abhout.pocket_ledger_be.extraction;
 import com.anthropic.client.AnthropicClient;
 import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.models.messages.*;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.Base64;
 import java.util.List;
 
 @Service
-public class ReceiptExtractionService {
+@ConditionalOnProperty(name = "app.extraction.provider", havingValue = "anthropic")
+public class AnthropicReceiptExtractor implements ReceiptExtractor {
     private static final String SYSTEM_PROMPT_TEMPLATE = """  
       You extract transaction data from a single financial document (a receipt, invoice, or photographed bill). This is for an Indian personal-finance app —                                 
       amounts are Indian rupees, dates may appear in day-first format.                                             
@@ -27,7 +29,7 @@ public class ReceiptExtractionService {
 
     private final AnthropicClient client;
 
-    public ReceiptExtractionService() {
+    public AnthropicReceiptExtractor() {
         this.client = AnthropicOkHttpClient.fromEnv();
     }
 

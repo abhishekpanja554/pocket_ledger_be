@@ -7,6 +7,9 @@ app:
     s3:
       bucket: ${S3_BUCKET:pocket-ledger-s3-567627324227-ap-south-1-an}
       region: ${AWS_REGION:ap-south-1}
+  extraction:
+    provider: gemini
+    gemini-model: gemini-3.6-flash
 spring:
   application:
     name: pocket_ledget_be

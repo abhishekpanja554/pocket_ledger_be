@@ -7,7 +7,7 @@ import com.abhout.pocket_ledger_be.drive.DriveClient;
 import com.abhout.pocket_ledger_be.drive.DriveFile;
 import com.abhout.pocket_ledger_be.extraction.ReceiptExtraction;
 import com.abhout.pocket_ledger_be.extraction.ReceiptExtractionRefusedException;
-import com.abhout.pocket_ledger_be.extraction.ReceiptExtractionService;
+import com.abhout.pocket_ledger_be.extraction.ReceiptExtractor;
 import com.abhout.pocket_ledger_be.parsing.StatementParsingService;
 import com.abhout.pocket_ledger_be.parsing.models.StatementParseResult;
 import com.abhout.pocket_ledger_be.parsing.models.TransactionCandidate;
@@ -43,7 +43,7 @@ public class DriveSyncServiceTest {
     @Mock
     private StatementParsingService statementParsingService;
     @Mock
-    private ReceiptExtractionService receiptExtractionService;
+    private ReceiptExtractor receiptExtractionService;
     @Mock
     private DocumentService documentService;
     @Mock

@@ -7,13 +7,15 @@ import com.abhout.pocket_ledger_be.drive.DriveClient;
 import com.abhout.pocket_ledger_be.drive.DriveFile;
 import com.abhout.pocket_ledger_be.extraction.ReceiptExtraction;
 import com.abhout.pocket_ledger_be.extraction.ReceiptExtractionRefusedException;
-import com.abhout.pocket_ledger_be.extraction.ReceiptExtractionService;
+import com.abhout.pocket_ledger_be.extraction.ReceiptExtractor;
 import com.abhout.pocket_ledger_be.parsing.StatementParsingService;
 import com.abhout.pocket_ledger_be.parsing.models.StatementParseResult;
 import com.abhout.pocket_ledger_be.transaction.DTOs.TransactionWriteResponse;
 import com.abhout.pocket_ledger_be.transaction.TransactionService;
 import com.abhout.pocket_ledger_be.user.User;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -29,12 +31,13 @@ import static com.abhout.pocket_ledger_be.document.enums.DocumentStatus.isTabula
 @RequiredArgsConstructor
 public class DriveSyncService {
     private static final long MAX_FILE_BYTES = 20L * 1024 * 1024;
+    private static final Logger log = LoggerFactory.getLogger(DriveSyncService.class);
     private static final String DRIVE_TAG = "Drive import";
     private static final String DRIVE_ACCOUNT = "Drive import";
 
     private final DriveClient driveClient;
     private final StatementParsingService statementParsingService;
-    private final ReceiptExtractionService receiptExtractionService;
+    private final ReceiptExtractor receiptExtractionService;
     private final DocumentService documentService;
     private final TransactionService transactionService;
     private final ObjectMapper objectMapper;
@@ -81,6 +84,7 @@ public class DriveSyncService {
                             knownCategories
                     );
         } catch (RuntimeException e){
+            log.error("Failed to process file {}", file.name(), e);
             return DriveFileOutcome.failed(
                     file.name() + " could not be processed.",
                     file.id()

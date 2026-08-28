@@ -1,6 +1,7 @@
 package com.abhout.pocket_ledger_be.setting;
 
 import com.abhout.pocket_ledger_be.user.User;
+import com.abhout.pocket_ledger_be.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class SettingService {
     private final SettingRepository settingRepository;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
     @Value("${app.default-timezone}")
@@ -406,13 +408,14 @@ public class SettingService {
         writeIfPresent(user, body, "driveSchedule", this::normalizeDriveSchedule);
     }
 
-    public  List<User> getUsersWithDriveFolderConfigured(){
-        return settingRepository.findByKey("driveFolder").stream()
-                .filter(setting -> {
-                    JsonNode node = parseValue(setting);
-                    return node != null && !node.isNull() && node.isObject();
-                }).map(Setting :: getUser)
-                .toList();
+    public List<User> getUsersWithDriveFolderConfigured() {
+        List<UUID> userIds =
+                settingRepository.findByKey("driveFolder").stream()
+                        .filter(setting -> {
+                            JsonNode node = parseValue(setting);
+                            return node != null && !node.isNull() && node.isObject();
+                        }).map(setting -> setting.getUser().getId()).toList();
+        return userRepository.findAllById(userIds);
     }
 
     @Transactional
