@@ -55,7 +55,14 @@ public class DocumentService {
 
             try {
                 storedDocList.add(
-                        storeDocument(user, name, content, file.getContentType(), requestedStatus)
+                        storeDocument(
+                                user,
+                                name,
+                                content,
+                                file.getContentType(),
+                                requestedStatus,
+                                DocumentSource.UPLOAD
+                        )
                 );
             } catch (RuntimeException e) {
                 errors.add(name + " could not be stored. Nothing was saved for it.");
@@ -84,7 +91,8 @@ public class DocumentService {
             String filename,
             byte[] content,
             String contentType,
-            DocumentStatus status
+            DocumentStatus status,
+            DocumentSource source
     ){
         String mimeType = Optional.ofNullable(contentType).filter( s -> !s.isBlank())
                 .orElse("application/octet-stream");
@@ -104,7 +112,7 @@ public class DocumentService {
                     content.length,
                     objectKey,
                     doccStatus,
-                    DocumentSource.UPLOAD
+                    source
             );
             return  DocumentResponse.from(documentRepository.saveAndFlush(doc));
         } catch (RuntimeException e) {
