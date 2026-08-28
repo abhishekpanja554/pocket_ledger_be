@@ -30,23 +30,58 @@ public class SettingService {
     private String defaultTimeZone;
 
     private static final List<String> STARTER_CATEGORIES =
-        List.of(
-            "Housing", "Groceries", "Shopping", "Dining",
-            "Transportation",
-            "Utilities", "Subscriptions", "Insurance",
-            "Health",
-            "Entertainment", "Income", "Needs review",
-            "Other");
+            List.of(
+                "Housing",
+                    "Groceries",
+                    "Shopping",
+                    "Dining",
+                    "Transportation",
+                    "Utilities",
+                    "Subscriptions",
+                    "Insurance",
+                    "Health",
+                    "Entertainment",
+                    "Income",
+                    "Needs review",
+                    "Other"
+            );
     private static final List<String> STARTER_ACCOUNTS =
-        List.of("Main bank Account", "Credit Card", "Cash");
-    private static final Set<String> PERIOD_IDS = Set.of(
-        "all-time", "this-month", "last-month",
-        "last-3-months", "last-6-months", "this-year");
+            List.of(
+                    "Main bank Account",
+                    "Credit Card",
+                    "Cash"
+            );
+    private static final Set<String> PERIOD_IDS =
+            Set.of(
+                    "all-time",
+                    "this-month",
+                    "last-month",
+                    "last-3-months",
+                    "last-6-months",
+                    "this-year"
+            );
     private static final Set<String> CADENCES =
-            Set.of("weekly", "biweekly", "monthly",
-                    "quarterly", "annual");
+            Set.of(
+                    "weekly",
+                    "biweekly",
+                    "monthly",
+                    "quarterly",
+                    "annual"
+            );
     private static final Pattern TIME_PATTERN =
             Pattern.compile("^\\d{2}:\\d{2}$");
+
+    private static final String PROCESSED_FILE_IDS_KEY = "processedFileIds";
+    private static final int MAX_PROCESSED_IDS = 5000;
+
+    public List<String> getProcessedFileIds(User user) {
+        return settingRepository.findByUserIdAndKey(user.getId(),PROCESSED_FILE_IDS_KEY)
+                .map(this::parseValue)
+                .map(node -> asStringList(
+                        node,
+                        List.of())
+                ).orElse(List.of());
+    }
 
     private String str(JsonNode node, String fallback, int max) {
         if (node == null || !node.isString()) return fallback;
@@ -369,5 +404,53 @@ public class SettingService {
         writeIfPresent(user, body, "recurring", this::normalizeRecurring);
         writeIfPresent(user, body, "driveFolder", this::normalizeDriveFolder);
         writeIfPresent(user, body, "driveSchedule", this::normalizeDriveSchedule);
+    }
+
+    public  List<User> getUsersWithDriveFolderConfigured(){
+        return settingRepository.findByKey("driveFolder").stream()
+                .filter(setting -> {
+                    JsonNode node = parseValue(setting);
+                    return node != null && !node.isNull() && node.isObject();
+                }).map(Setting :: getUser)
+                .toList();
+    }
+
+    @Transactional
+    public void recordDriveSyncResult(
+            User user,
+            List<String> updatedProcessedFileIds,
+            DriveSyncMeta meta,
+            boolean anyStored
+    ){
+        List<String> capped = updatedProcessedFileIds.size() > MAX_PROCESSED_IDS ?
+                updatedProcessedFileIds.subList(
+                        updatedProcessedFileIds.size() - MAX_PROCESSED_IDS,
+                        updatedProcessedFileIds.size()
+                ) : updatedProcessedFileIds;
+
+        settingRepository.save(
+                new Setting(
+                        user,
+                        PROCESSED_FILE_IDS_KEY,
+                        objectMapper.writeValueAsString(capped)
+                )
+        );
+        settingRepository.save(
+                new Setting(
+                        user,
+                        "driveSync",
+                        objectMapper.writeValueAsString(meta)
+                )
+        );
+
+        if (anyStored) {
+            settingRepository.save(
+                    new Setting(
+                            user,
+                            "freshStart",
+                            objectMapper.writeValueAsString(false)
+                    )
+            );
+        }
     }
 }

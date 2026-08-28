@@ -11,4 +11,6 @@ import java.util.UUID;
 @Repository
 public interface SettingRepository extends JpaRepository<Setting, SettingId> {
     List<Setting> findByUserId(UUID userId);
+    Optional<Setting> findByUserIdAndKey(UUID userId, String key);
+    List<Setting> findByKey(String key);
 }
