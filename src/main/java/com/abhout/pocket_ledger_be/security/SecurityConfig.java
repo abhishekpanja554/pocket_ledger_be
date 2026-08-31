@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/actuator/health").permitAll()
                         .anyRequest().denyAll()
                 )
                 .formLogin(form -> form.disable())
