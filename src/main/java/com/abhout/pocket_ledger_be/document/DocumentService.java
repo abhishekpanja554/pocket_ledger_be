@@ -130,7 +130,7 @@ public class DocumentService {
         return null;
     }
 
-    private static String safeSegment(String value) {
+    public static String safeSegment(String value) {
         String cleaned = Normalizer.normalize(value,
                         Normalizer.Form.NFKD)
                 .replaceAll("[^a-zA-Z0-9._-]+", "-")

@@ -17,6 +17,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex){
+        ex.printStackTrace();
         ErrorDetails error = new ErrorDetails("INTERNAL_ERROR",
                 "Something went wrong. Please try after some time");
         return ResponseEntity
