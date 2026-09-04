@@ -16,7 +16,9 @@
         { "name": "DB_URL", "value": "jdbc:postgresql://pocket-ledger-db.ctiwcsww0gwr.ap-south-1.rds.amazonaws.com:5432/pocket_ledger" },
         { "name": "DB_USER", "value": "postgres" },
         { "name": "S3_BUCKET", "value": "pocket-ledger-s3-567627324227-ap-south-1-an" },
-        { "name": "AWS_REGION", "value": "ap-south-1" }
+        { "name": "AWS_REGION", "value": "ap-south-1" },
+        { "name": "CORS_ALLOWED_ORIGIN", "value": "https://app.pocketledgerapp.com" },
+        { "name": "FRONTEND_URL", "value": "https://app.pocketledgerapp.com" }
       ],
       "secrets": [
         { "name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:ap-south-1:567627324227:secret:rds!db-b8e3155e-93fe-4493-bcc3-c88b876474ff-lxBoSh:password::" },
