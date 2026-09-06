@@ -16,7 +16,7 @@ import java.util.List;
 public class GeminiReceiptExtractor implements ReceiptExtractor {
     private static final String PROMPT_TEMPLATE = """
         You extract transaction data from a single financial document (a receipt,
-        invoice, or photographed bill). This is for an Indian personal-finance app —
+        invoice, app bill screenshot or photographed bill). This is for an Indian personal-finance app —
         amounts are Indian rupees, dates may appear in day-first format.
 
         Rules:
