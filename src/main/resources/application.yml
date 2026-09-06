@@ -2,6 +2,7 @@ app:
   cors:
     allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  cookie-domain: ${COOKIE_DOMAIN:}
   default-timezone: ${LEDGERLY_TIMEZONE:Asia/Kolkata}
   storage:
     s3:

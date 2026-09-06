@@ -26,6 +26,8 @@ import java.util.List;
 public class SecurityConfig {
     @Value("${app.cors.allowed-origin}")
     private String allowedOrigin;
+    @Value("${app.cookie-domain:}")
+    private String cookieDomain;
 
     @Bean
     public SecurityContextRepository securityContextRepository() {
@@ -34,11 +36,15 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        if (!cookieDomain.isBlank()) {
+            csrfTokenRepository.setCookieCustomizer(cookie -> cookie.domain(cookieDomain));
+        }
         http
                 .securityContext(sc -> sc.securityContextRepository(securityContextRepository()))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf ->
-                        csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        csrf.csrfTokenRepository(csrfTokenRepository)
                                 .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
                 ).addFilterAfter(new CSRFCookieFilter(), BasicAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(new
