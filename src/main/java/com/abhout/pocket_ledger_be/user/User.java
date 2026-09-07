@@ -31,6 +31,15 @@ public class User implements java.io.Serializable {
     @Column(name = "email_verified",nullable = false)
     private boolean emailVerified;
 
+    @Column(name = "full_name")
+    private String fullName;
+
+    @Column(name = "locale", nullable = false)
+    private String locale = "en-IN";
+
+    @Column(name = "currency", nullable = false)
+    private String currency = "INR";
+
     public User(String email, String passwordHash) {
         this.email = email;
         this.passwordHash = passwordHash;
@@ -42,5 +51,11 @@ public class User implements java.io.Serializable {
 
     public void changePassword(String passwordHash){
         this.passwordHash = passwordHash;
+    }
+
+    public void updateProfile(String fullName, String locale, String currency){
+        if (fullName != null) this.fullName = fullName;
+        if (locale != null) this.locale = locale;
+        if (currency != null) this.currency = currency;
     }
 }

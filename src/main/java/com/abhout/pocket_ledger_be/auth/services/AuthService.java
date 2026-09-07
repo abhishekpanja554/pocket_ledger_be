@@ -2,8 +2,13 @@ package com.abhout.pocket_ledger_be.auth.services;
 
 import com.abhout.pocket_ledger_be.auth.DTOs.*;
 import com.abhout.pocket_ledger_be.auth.components.EmailSender;
+import com.abhout.pocket_ledger_be.auth.exceptions.AccountDeletionFailedException;
 import com.abhout.pocket_ledger_be.auth.exceptions.EmailAlreadyExistsException;
+import com.abhout.pocket_ledger_be.auth.exceptions.InvalidPasswordException;
 import com.abhout.pocket_ledger_be.auth.models.TokenPurpose;
+import com.abhout.pocket_ledger_be.document.DocumentRepository;
+import com.abhout.pocket_ledger_be.document.models.Document;
+import com.abhout.pocket_ledger_be.storage.DocumentStorageProvider;
 import com.abhout.pocket_ledger_be.user.User;
 import com.abhout.pocket_ledger_be.user.UserPrincipal;
 import com.abhout.pocket_ledger_be.user.UserRepository;
@@ -18,10 +23,15 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.Session;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -32,6 +42,9 @@ public class AuthService {
     private final EmailSender emailSender;
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
+    private final FindByIndexNameSessionRepository<? extends Session> sessionRepository;
+    private final DocumentRepository documentRepository;
+    private final DocumentStorageProvider documentStorageProvider;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -42,7 +55,10 @@ public class AuthService {
             TokenService tokenService,
             EmailSender emailSender,
             AuthenticationManager authenticationManager,
-            SecurityContextRepository securityContextRepository
+            SecurityContextRepository securityContextRepository,
+            FindByIndexNameSessionRepository<? extends Session> sessionRepository,
+            DocumentRepository documentRepository,
+            DocumentStorageProvider documentStorageProvider
     ){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -50,6 +66,9 @@ public class AuthService {
         this.emailSender = emailSender;
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
+        this.sessionRepository = sessionRepository;
+        this.documentRepository = documentRepository;
+        this.documentStorageProvider = documentStorageProvider;
     }
 
     public UserResponse register(RegisterRequest req) {
@@ -107,5 +126,68 @@ public class AuthService {
     public void resetPassword(ResetPasswordRequest req){
         User user = tokenService.consume(req.token(), TokenPurpose.RESET_PASSWORD);
         user.changePassword(passwordEncoder.encode(req.newPassword()));
+    }
+
+    public void changePassword(ChangePasswordRequest req, User user){
+        if( !passwordEncoder.matches(req.oldPassword(), user.getPasswordHash()) ){
+            throw new InvalidPasswordException("Old password is incorrect");
+        }
+        Map<String, ? extends Session> sessions =
+                sessionRepository.findByIndexNameAndIndexValue(
+                        FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
+                        user.getEmail()
+                );
+        sessions.keySet().forEach(sessionRepository::deleteById);
+        user.changePassword(passwordEncoder.encode(req.newPassword()));
+        userRepository.save(user);
+    }
+
+    public void deleteAccount(DeleteAccountRequest req, User user){
+        if( !passwordEncoder.matches(req.password(), user.getPasswordHash()) ){
+            throw new InvalidPasswordException("Password is incorrect");
+        }
+        List<Document> docs = documentRepository.findByUserId(user.getId());
+        List<String> failed = new ArrayList<>();
+        for (Document doc : docs) {
+            try {
+                documentStorageProvider.delete(doc.getObjectKey());
+            } catch (RuntimeException e) {
+                failed.add(doc.getObjectKey());
+            }
+        }
+        if (!failed.isEmpty()) {
+            throw new AccountDeletionFailedException(
+                    failed.size() + " of " + docs.size() + " files could not be deleted. Please try again."
+            );
+        }
+        userRepository.delete(user);
+        Map<String, ? extends Session> sessions =
+                sessionRepository.findByIndexNameAndIndexValue(
+                        FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
+                        user.getEmail()
+                );
+        sessions.keySet().forEach(sessionRepository::deleteById);
+    }
+
+    public UserResponse updateProfile(
+            UpdateProfileRequest req,
+            User user,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ){
+        user.updateProfile(
+                req.fullName(),
+                req.locale(),
+                req.currency()
+        );
+        userRepository.save(user);
+        UserPrincipal newPrincipal = new UserPrincipal(user);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                newPrincipal, null, newPrincipal.getAuthorities());
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        securityContextRepository.saveContext(securityContext, request, response);
+        return UserResponse.from(user);
     }
 }

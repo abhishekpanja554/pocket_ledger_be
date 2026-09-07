@@ -50,6 +50,35 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(UserResponse.from(userPrincipal.getUser())));
     }
 
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestBody @Valid DeleteAccountRequest request) {
+        if(userPrincipal == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("UNAUTHORIZED", "You are unauthorized"));
+        }
+        authService.deleteAccount(request, userPrincipal.getUser());
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestBody @Valid UpdateProfileRequest req,
+            HttpServletRequest request,
+            HttpServletResponse res
+    ){
+        if(userPrincipal == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("UNAUTHORIZED", "You are unauthorized"));
+        }
+        UserResponse response = authService.updateProfile(req, userPrincipal.getUser(), request, res);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @PostMapping("/verify-email")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestBody @Valid VerifyEmailRequest request){
         authService.verifyEmail(request);
@@ -71,6 +100,20 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestBody @Valid ResetPasswordRequest request){
         authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @RequestBody @Valid ChangePasswordRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal
+    ){
+        if(userPrincipal == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("UNAUTHORIZED", "You are unauthorized"));
+        }
+        authService.changePassword(request, userPrincipal.getUser());
         return ResponseEntity.ok(ApiResponse.success());
     }
 
