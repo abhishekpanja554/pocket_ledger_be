@@ -168,4 +168,26 @@ public class AuthService {
                 );
         sessions.keySet().forEach(sessionRepository::deleteById);
     }
+
+    public UserResponse updateProfile(
+            UpdateProfileRequest req,
+            User user,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ){
+        user.updateProfile(
+                req.fullName(),
+                req.locale(),
+                req.currency()
+        );
+        userRepository.save(user);
+        UserPrincipal newPrincipal = new UserPrincipal(user);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                newPrincipal, null, newPrincipal.getAuthorities());
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        securityContextRepository.saveContext(securityContext, request, response);
+        return UserResponse.from(user);
+    }
 }

@@ -63,6 +63,22 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 
+    @PatchMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestBody @Valid UpdateProfileRequest req,
+            HttpServletRequest request,
+            HttpServletResponse res
+    ){
+        if(userPrincipal == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("UNAUTHORIZED", "You are unauthorized"));
+        }
+        UserResponse response = authService.updateProfile(req, userPrincipal.getUser(), request, res);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @PostMapping("/verify-email")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestBody @Valid VerifyEmailRequest request){
         authService.verifyEmail(request);
