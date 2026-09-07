@@ -59,7 +59,7 @@ public class TokenService {
         String tokenHash = hash(rawToken);
         AuthToken authToken = authTokenRepository
             .findByTokenHashAndPurpose(tokenHash,tokenPurpose)
-            .filter(token -> token.isValid())
+            .filter(AuthToken::isValid)
             .orElseThrow(() -> new InvalidTokenException(
                     "Token is invalid, expired, or already used"));
         authToken.markUsed();
