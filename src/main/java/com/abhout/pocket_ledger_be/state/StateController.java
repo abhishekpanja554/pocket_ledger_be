@@ -5,6 +5,7 @@ import com.abhout.pocket_ledger_be.web.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,5 +28,16 @@ public class StateController {
 
         StateResponse response = stateService.getState(userPrincipal.getUser());
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteState(@AuthenticationPrincipal UserPrincipal userPrincipal){
+        if(userPrincipal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("UNAUTHORIZED", "You are unauthorized"));
+        }
+
+//        stateService.deleteState(userPrincipal.getUser());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

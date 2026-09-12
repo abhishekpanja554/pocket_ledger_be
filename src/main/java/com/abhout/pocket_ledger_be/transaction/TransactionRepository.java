@@ -18,4 +18,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     List<Transaction> findByUserIdAndFingerprintIn(UUID userId, Collection<String> fingerprint);
     Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
     boolean existsByUserIdAndFingerprintAndIdNot(UUID userId, String fingerprint, UUID id);
+    void deleteByUserId(UUID userId);
 }
