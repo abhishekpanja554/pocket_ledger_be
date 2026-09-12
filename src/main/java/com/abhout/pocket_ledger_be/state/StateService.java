@@ -1,13 +1,17 @@
 package com.abhout.pocket_ledger_be.state;
 
 import com.abhout.pocket_ledger_be.document.DocumentRepository;
+import com.abhout.pocket_ledger_be.document.DocumentService;
 import com.abhout.pocket_ledger_be.document.DTOs.DocumentResponse;
+import com.abhout.pocket_ledger_be.document.models.Document;
 import com.abhout.pocket_ledger_be.rule.RuleRepository;
 import com.abhout.pocket_ledger_be.rule.RuleResponse;
+import com.abhout.pocket_ledger_be.rule.RuleService;
 import com.abhout.pocket_ledger_be.setting.SettingService;
 import com.abhout.pocket_ledger_be.setting.SettingsResponse;
 import com.abhout.pocket_ledger_be.tag.TagRepository;
 import com.abhout.pocket_ledger_be.tag.TagResponse;
+import com.abhout.pocket_ledger_be.tag.TagService;
 import com.abhout.pocket_ledger_be.transaction.TransactionRepository;
 import com.abhout.pocket_ledger_be.transaction.DTOs.TransactionResponse;
 import com.abhout.pocket_ledger_be.user.User;
@@ -28,9 +32,13 @@ public class StateService {
     private final TransactionRepository transactionRepository;
     private final RuleRepository ruleRepository;
     private final DocumentRepository documentRepository;
+    private final DocumentService documentService;
     private final SettingService settingService;
+    private final TagService tagService;
+    private final RuleService ruleService;
 
     private static final int MAX_TRANSACTIONS = 5000;
+    static final String WIPE_CONFIRMATION = "DELETE ALL POCKET LEDGER DATA";
 
     @Transactional(readOnly = true)
     public StateResponse getState(User user){
@@ -61,4 +69,21 @@ public class StateService {
                 settings, documents);
     }
 
+    @Transactional
+    public int deleteState(User user, DeleteStateRequest req) {
+        if (!WIPE_CONFIRMATION.equals(req.confirm())) {
+            throw new InvalidConfirmationException(
+                    "This request must include the exact confirmation value.");
+        }
+
+        List<Document> purgedDocuments = documentService.purgeAllForUser(user);
+
+        transactionRepository.deleteByUserId(user.getId());
+        documentRepository.deleteAll(purgedDocuments);
+        tagService.replaceTags(user, null);
+        ruleService.replaceRules(user, null);
+        settingService.resetForWipe(user);
+
+        return purgedDocuments.size();
+    }
 }

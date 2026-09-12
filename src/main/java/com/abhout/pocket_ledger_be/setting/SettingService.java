@@ -246,7 +246,7 @@ public class SettingService {
             if (trimmed.isEmpty()) continue;
             if
             (!seenLower.add(trimmed.toLowerCase()))
-                continue;   // case-insensitive dedupe
+                continue;
             result.add(trimmed);
         }
         return result;
@@ -406,6 +406,29 @@ public class SettingService {
         writeIfPresent(user, body, "recurring", this::normalizeRecurring);
         writeIfPresent(user, body, "driveFolder", this::normalizeDriveFolder);
         writeIfPresent(user, body, "driveSchedule", this::normalizeDriveSchedule);
+    }
+
+    @Transactional
+    public void resetForWipe(User user) {
+        save(user, "categories", STARTER_CATEGORIES);
+        save(user, "accounts", STARTER_ACCOUNTS);
+        save(user, "goals", List.of());
+        save(user, "budgets", List.of());
+        save(user, "subscriptions", List.of());
+        save(user, "recurring", List.of());
+        save(user, "dismissedPatterns", List.of());
+        save(user, "assets", BigDecimal.ZERO);
+        save(user, "liabilities", BigDecimal.ZERO);
+        save(user, "netWorthConfigured", false);
+        save(user, "selectedPeriod", "all-time");
+        save(user, "freshStart", true);
+        save(user, PROCESSED_FILE_IDS_KEY, List.of());
+        save(user, "driveResetAt", Instant.now().toString());
+        save(user, "driveSync", new DriveSyncMeta(null, "never", 0, 0, 0, 0, List.of()));
+    }
+
+    private void save(User user, String key, Object value) {
+        settingRepository.save(new Setting(user, key, objectMapper.writeValueAsString(value)));
     }
 
     public List<User> getUsersWithDriveFolderConfigured() {

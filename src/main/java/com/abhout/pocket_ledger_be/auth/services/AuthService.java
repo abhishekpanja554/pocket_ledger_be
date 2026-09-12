@@ -6,9 +6,8 @@ import com.abhout.pocket_ledger_be.auth.exceptions.AccountDeletionFailedExceptio
 import com.abhout.pocket_ledger_be.auth.exceptions.EmailAlreadyExistsException;
 import com.abhout.pocket_ledger_be.auth.exceptions.InvalidPasswordException;
 import com.abhout.pocket_ledger_be.auth.models.TokenPurpose;
-import com.abhout.pocket_ledger_be.document.DocumentRepository;
-import com.abhout.pocket_ledger_be.document.models.Document;
-import com.abhout.pocket_ledger_be.storage.DocumentStorageProvider;
+import com.abhout.pocket_ledger_be.document.DocumentPurgeFailedException;
+import com.abhout.pocket_ledger_be.document.DocumentService;
 import com.abhout.pocket_ledger_be.user.User;
 import com.abhout.pocket_ledger_be.user.UserPrincipal;
 import com.abhout.pocket_ledger_be.user.UserRepository;
@@ -29,8 +28,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -43,8 +40,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
     private final FindByIndexNameSessionRepository<? extends Session> sessionRepository;
-    private final DocumentRepository documentRepository;
-    private final DocumentStorageProvider documentStorageProvider;
+    private final DocumentService documentService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -57,8 +53,7 @@ public class AuthService {
             AuthenticationManager authenticationManager,
             SecurityContextRepository securityContextRepository,
             FindByIndexNameSessionRepository<? extends Session> sessionRepository,
-            DocumentRepository documentRepository,
-            DocumentStorageProvider documentStorageProvider
+            DocumentService documentService
     ){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -67,8 +62,7 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
         this.sessionRepository = sessionRepository;
-        this.documentRepository = documentRepository;
-        this.documentStorageProvider = documentStorageProvider;
+        this.documentService = documentService;
     }
 
     public UserResponse register(RegisterRequest req) {
@@ -146,19 +140,10 @@ public class AuthService {
         if( !passwordEncoder.matches(req.password(), user.getPasswordHash()) ){
             throw new InvalidPasswordException("Password is incorrect");
         }
-        List<Document> docs = documentRepository.findByUserId(user.getId());
-        List<String> failed = new ArrayList<>();
-        for (Document doc : docs) {
-            try {
-                documentStorageProvider.delete(doc.getObjectKey());
-            } catch (RuntimeException e) {
-                failed.add(doc.getObjectKey());
-            }
-        }
-        if (!failed.isEmpty()) {
-            throw new AccountDeletionFailedException(
-                    failed.size() + " of " + docs.size() + " files could not be deleted. Please try again."
-            );
+        try {
+            documentService.purgeAllForUser(user);
+        } catch (DocumentPurgeFailedException e) {
+            throw new AccountDeletionFailedException(e.getMessage());
         }
         userRepository.delete(user);
         Map<String, ? extends Session> sessions =

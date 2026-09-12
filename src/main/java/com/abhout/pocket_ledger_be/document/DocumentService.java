@@ -71,6 +71,24 @@ public class DocumentService {
         return DocumentIploadResponse.of(storedDocList, errors);
     }
 
+    public List<Document> purgeAllForUser(User user) {
+        List<Document> docs = documentRepository.findByUserId(user.getId());
+        List<String> failed = new ArrayList<>();
+        for (Document doc : docs) {
+            try {
+                documentStorageProvider.delete(doc.getObjectKey());
+            } catch (RuntimeException e) {
+                failed.add(doc.getObjectKey());
+            }
+        }
+        if (!failed.isEmpty()) {
+            throw new DocumentPurgeFailedException(
+                    failed.size() + " of " + docs.size() + " files could not be deleted. Please try again."
+            );
+        }
+        return docs;
+    }
+
     public DocumentFile getFileForDownload(User user, UUID id){
         Document document = documentRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(DocumentNotFoundException::new);

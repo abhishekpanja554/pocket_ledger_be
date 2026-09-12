@@ -4,7 +4,7 @@ import com.abhout.pocket_ledger_be.auth.exceptions.BaseException;
 import org.springframework.http.HttpStatus;
 
 public class InvalidConfirmationException extends BaseException {
-    protected InvalidConfirmationException(String message) {
+    public InvalidConfirmationException(String message) {
         super("INVALID_WIPE_CONFIRMATION", message, HttpStatus.BAD_REQUEST);
     }
 }
